@@ -8,6 +8,7 @@
 
 body {
   margin: 100px;
+  user-select: none;
 }
 
 #editor {
@@ -19,10 +20,18 @@ body {
 
 #caret {
   display: inline-block;
-  height: 1em;
+  height: 1.5em;
   width: 2px;
   margin-right: -2px;
+  margin-bottom: -0.5em;
   background: #000;
+  animation: caret-animation 1s infinite;
+}
+
+@keyframes caret-animation {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 #sneakyinput {
@@ -121,7 +130,20 @@ function updateEditorText() {
   editor.appendChild(nodeAfterCaret);
 }
 
-editor.addEventListener('click', function(e) {
+let mouseIsDown = false;
+
+editor.addEventListener('mousedown', function(e) {
+  mouseIsDown = true;
+});
+
+editor.addEventListener('mouseup', function(e) {
+  mouseIsDown = false;
+});
+
+editor.addEventListener('mousemove', function(e) {
+  if (!mouseIsDown) {
+    return;
+  }
   let shiftPositionBy = 0;
   for (let node = editor.firstChild; node; node = node.nextSibling) {
     if (node == caret) {
