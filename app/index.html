@@ -144,7 +144,6 @@ function findTextPosition(span, e) {
   // TODO: Ensure that textNode confirms to expectations (it's a text node and
   // there is no sibling).
   if (textNode.textContent.length <= 1) {
-    // TODO: Take into account the offset of the editor.
     let boundingRect = span.getBoundingClientRect();
     if (boundingRect.left <= e.pageX &&
         boundingRect.top <= e.pageY &&
