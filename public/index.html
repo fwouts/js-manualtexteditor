@@ -51,7 +51,6 @@ body {
   width: 100px;
   height: 1em;
   vertical-align: middle;
-  background: #faa;
   border: 1px solid #e88;
   border-radius: 8px;
   margin: 0 5px;
@@ -143,10 +142,16 @@ class TextBlock {
 }
 
 class SpecialBlock {
-  constructor() {}
+  constructor(optColor) {
+    this._color = optColor || '#FAA';
+  }
 
   getLength() {
     return 1;
+  }
+
+  getColor() {
+    return this._color;
   }
 }
 
@@ -157,11 +162,11 @@ let editorContent = new EditorContent();
 editorContent.addBlock(new TextBlock('This is a test '));
 editorContent.addBlock(new SpecialBlock());
 editorContent.addBlock(new TextBlock('to see whether I'));
+editorContent.addBlock(new SpecialBlock('#fc8'));
 editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock('#af8'));
 editorContent.addBlock(new SpecialBlock());
-editorContent.addBlock(new SpecialBlock());
-editorContent.addBlock(new SpecialBlock());
-editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock('#58F'));
 editorContent.addBlock(new SpecialBlock());
 editorContent.addBlock(new SpecialBlock());
 editorContent.addBlock(new SpecialBlock());
@@ -271,6 +276,7 @@ function updateEditorText() {
       let specialBlockNode = document.createElement('div');
       specialBlockNode.associatedBlock = block;
       specialBlockNode.className = 'special-block';
+      specialBlockNode.style = 'background-color: ' + block.getColor();
       editor.appendChild(specialBlockNode);
     }
   }
