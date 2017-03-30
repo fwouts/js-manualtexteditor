@@ -86,6 +86,7 @@ class EditorContent {
 
   replace(text, atPosition, replaceExisting) {
     let currentPosition = 0;
+    let inserted = false;
     for (let i = 0; i < this._blocks.length; i++) {
       let block = this._blocks[i];
       let beforeBlockPosition = currentPosition;
@@ -94,14 +95,20 @@ class EditorContent {
       if (block instanceof TextBlock) {
         if (afterBlockPosition > atPosition || i == this._blocks.length - 1) {
           block.replace(text, atPosition - beforeBlockPosition, replaceExisting);
+          inserted = true;
           break;
         }
       } else {
         if (afterBlockPosition > atPosition) {
           this._blocks.splice(i, replaceExisting ? 1 : 0, new TextBlock(text));
+          inserted = true;
           break;
         }
       }
+    }
+    if (!inserted) {
+      // Text was appended at the end.
+      this._blocks.push(new TextBlock(text));
     }
     this._optimizeBlocks();
   }
