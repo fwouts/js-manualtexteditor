@@ -7,7 +7,8 @@
 @import url('https://fonts.googleapis.com/css?family=Nunito+Sans');
 
 body {
-  margin: 100px;
+  width: 800px;
+  margin: 100px auto;
   user-select: none;
 }
 
@@ -16,6 +17,8 @@ body {
   font-size: 1.4em;
   height: 200px;
   outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 #caret {
@@ -43,6 +46,17 @@ body {
   border: 1px solid #f00;
 }
 
+.special-block {
+  display: inline-block;
+  width: 100px;
+  height: 1em;
+  vertical-align: middle;
+  background: #faa;
+  border: 1px solid #e88;
+  border-radius: 8px;
+  margin: 0 5px;
+}
+
 </style>
 </head>
 <body>
@@ -50,10 +64,113 @@ body {
 <input id="sneakyinput" />
 <script>
 
+class EditorContent {
+  constructor() {
+    this._blocks = [];
+  }
+
+  addBlock(block) {
+    this._blocks.push(block);
+  }
+
+  getBlocks() {
+    return this._blocks;
+  }
+
+  getTotalLength() {
+    let length = 0;
+    for (let block of this._blocks) {
+      length += block.getLength();
+    }
+    return length;
+  }
+
+  replace(text, atPosition, replaceExisting) {
+    let currentPosition = 0;
+    for (let i = 0; i < this._blocks.length; i++) {
+      let block = this._blocks[i];
+      let beforeBlockPosition = currentPosition;
+      let afterBlockPosition = beforeBlockPosition + block.getLength();
+      currentPosition =  afterBlockPosition;
+      if (block instanceof TextBlock) {
+        if (afterBlockPosition > atPosition || i == this._blocks.length - 1) {
+          block.replace(text, atPosition - beforeBlockPosition, replaceExisting);
+          break;
+        }
+      } else {
+        if (afterBlockPosition > atPosition) {
+          // TODO: Also insert the text.
+          if (replaceExisting) {
+            this._blocks.splice(i, 1);
+          }
+          break;
+        }
+      }
+    }
+    this._optimizeBlocks();
+  }
+
+  _optimizeBlocks() {
+    for (let i = 0; i < this._blocks.length;) {
+      if (this._blocks[i].getLength() == 0) {
+        this._blocks.splice(i, 1);
+      } else {
+        i++;
+      }
+    }
+    if (this._blocks.length == 0) {
+      this._blocks.push(new TextBlock(''));
+    }
+  }
+}
+
+class TextBlock {
+  constructor(text) {
+    this._text = text;
+  }
+
+  getText() {
+    return this._text;
+  }
+
+  getLength() {
+    return this._text.length;
+  }
+
+  replace(text, atPosition, replaceExisting) {
+    this._text = this._text.substr(0, atPosition) + text + this._text.substr(atPosition + (replaceExisting ? 1 : 0));
+  }
+}
+
+class SpecialBlock {
+  constructor() {}
+
+  getLength() {
+    return 1;
+  }
+}
+
 let caretPosition = 0;
 let caret = document.getElementById('caret');
 let editor = document.getElementById('editor');
-let editorText = 'This is a test to see whether I like this font or not.';
+let editorContent = new EditorContent();
+editorContent.addBlock(new TextBlock('This is a test '));
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new TextBlock('to see whether I'));
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new SpecialBlock());
+editorContent.addBlock(new TextBlock(' like this font or not.'));
 let hiddenInput = document.getElementById('sneakyinput');
 
 // We intercept key down events for keyboard commands other than typing in
@@ -66,14 +183,14 @@ hiddenInput.addEventListener('keydown', function(e) {
     case 8:
       // Backspace
       if (caretPosition > 0) {
-        editorText = editorText.substr(0, caretPosition - 1) + editorText.substr(caretPosition);
         caretPosition--;
+        editorContent.replace('', caretPosition, true);
       }
       break;
     case 46:
       // Delete
-      if (caretPosition < editorText.length) {
-        editorText = editorText.substr(0, caretPosition) + editorText.substr(caretPosition + 1);
+      if (caretPosition < editorContent.getTotalLength()) {
+        editorContent.replace('', caretPosition, true);
       }
       break;
     case 13:
@@ -89,7 +206,7 @@ hiddenInput.addEventListener('keydown', function(e) {
       break;
     case 39:
       // Right
-      if (caretPosition < editorText.length) {
+      if (caretPosition < editorContent.getTotalLength()) {
         caretPosition++;
         updateEditorText();
       }
@@ -113,7 +230,7 @@ hiddenInput.addEventListener('input', function(e) {
 });
 
 function insertText(text) {
-  editorText = editorText.substr(0, caretPosition) + text + editorText.substr(caretPosition);
+  editorContent.replace(text, caretPosition, false);
   caretPosition += text.length;
   updateEditorText();
 }
@@ -121,19 +238,49 @@ function insertText(text) {
 function updateEditorText() {
   caret.parentNode.removeChild(caret);
   editor.innerText = '';
-  let nodeBeforeCaret = document.createElement('span');
-  nodeBeforeCaret.textContent = editorText.substr(0, caretPosition);
-  let nodeAfterCaret = document.createElement('span');
-  nodeAfterCaret.textContent = editorText.substr(caretPosition);
-  editor.appendChild(nodeBeforeCaret);
-  editor.appendChild(caret);
-  editor.appendChild(nodeAfterCaret);
+
+  let currentPosition = 0;
+  let insertedCaret = false;
+  for (let block of editorContent.getBlocks()) {
+    let beforeBlockPosition = currentPosition;
+    let afterBlockPosition = beforeBlockPosition + block.getLength();
+    currentPosition =  afterBlockPosition;
+    if (block instanceof TextBlock) {
+      if (!insertedCaret && afterBlockPosition > caretPosition) {
+        let nodeBeforeCaret = document.createElement('span');
+        nodeBeforeCaret.textContent = block.getText().substr(0, caretPosition - beforeBlockPosition);
+        nodeBeforeCaret.associatedBlock = block;
+        let nodeAfterCaret = document.createElement('span');
+        nodeAfterCaret.textContent = block.getText().substr(caretPosition - beforeBlockPosition);
+        nodeAfterCaret.associatedBlock = block;
+        editor.appendChild(nodeBeforeCaret);
+        editor.appendChild(caret);
+        editor.appendChild(nodeAfterCaret);
+        insertedCaret = true;
+      } else {
+        let node = document.createElement('span');
+        node.textContent = block.getText();
+        node.associatedBlock = block;
+        editor.appendChild(node);
+      }
+    } else {
+      if (!insertedCaret && afterBlockPosition > caretPosition) {
+        editor.appendChild(caret);
+        insertedCaret = true;
+      }
+      let specialBlockNode = document.createElement('div');
+      specialBlockNode.associatedBlock = block;
+      specialBlockNode.className = 'special-block';
+      editor.appendChild(specialBlockNode);
+    }
+  }
 }
 
 let mouseIsDown = false;
 
 editor.addEventListener('mousedown', function(e) {
   mouseIsDown = true;
+  onClick(e);
 });
 
 editor.addEventListener('mouseup', function(e) {
@@ -141,6 +288,10 @@ editor.addEventListener('mouseup', function(e) {
 });
 
 editor.addEventListener('mousemove', function(e) {
+  onClick(e);
+});
+
+function onClick(e) {
   if (!mouseIsDown) {
     return;
   }
@@ -149,22 +300,40 @@ editor.addEventListener('mousemove', function(e) {
     if (node == caret) {
       continue;
     }
+    let block = node.associatedBlock;
     if (node == e.target) {
-      let position = findTextPosition(e.target, e);
-      if (position != -1) {
-        caretPosition = position + shiftPositionBy;
+      if (node.nodeName == 'SPAN') {
+        let position = findTextPosition(e.target, e);
+        if (position != -1) {
+          caretPosition = position + shiftPositionBy;
+          console.log('Caret position :', caretPosition);
+        }
+      } else {
+        caretPosition = shiftPositionBy;
       }
       updateEditorText();
+      break;
     } else {
-      shiftPositionBy += node.textContent.length;
+      if (block instanceof TextBlock) {
+        // Note: when we encounter several spans from the same block (e.g.
+        // because there is a caret in between) this will count length properly.
+        shiftPositionBy += node.textContent.length;
+      } else {
+        // Other blocks are never cut in half.
+        shiftPositionBy += block.getLength();
+      }
     }
   }
-});
+}
 
 function findTextPosition(span, e) {
   let textNode = span.firstChild;
-  // TODO: Ensure that textNode confirms to expectations (it's a text node and
-  // there is no sibling).
+  if (textNode.nodeType != 3 /* text node */) {
+    return -1;
+  }
+  if (textNode.nextSibling != null) {
+    throw 'Found a sibling when there shouldn\'t be one';
+  }
   if (textNode.textContent.length <= 1) {
     let boundingRect = span.getBoundingClientRect();
     if (boundingRect.left <= e.pageX &&
