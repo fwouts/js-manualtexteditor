@@ -312,10 +312,11 @@ function onClick(e) {
         let position = findTextPosition(e.target, e);
         if (position != -1) {
           caretPosition = position + shiftPositionBy;
-          console.log('Caret position :', caretPosition);
         }
       } else {
-        caretPosition = shiftPositionBy;
+        let boundingRect = node.getBoundingClientRect();
+        // Add either 0 or 1 depending on where we clicked.
+        caretPosition = shiftPositionBy + Math.round((e.pageX - boundingRect.left) / boundingRect.width);
       }
       updateEditorText();
       break;
@@ -346,7 +347,8 @@ function findTextPosition(span, e) {
         boundingRect.top <= e.pageY &&
         boundingRect.right >= e.pageX &&
         boundingRect.bottom >= e.pageY) {
-      return 0;
+      // Return either 0 or 1 depending on where we clicked.
+      return Math.round((e.pageX - boundingRect.left) / boundingRect.width);
     } else {
       return -1;
     }
