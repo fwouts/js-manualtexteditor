@@ -280,6 +280,9 @@ function updateEditorText() {
       editor.appendChild(specialBlockNode);
     }
   }
+  if (!insertedCaret) {
+    editor.appendChild(caret);
+  }
 }
 
 let mouseIsDown = false;
