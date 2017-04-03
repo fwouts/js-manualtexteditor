@@ -1,11 +1,13 @@
-import { TextBlock, SpecialBlock } from './blocks';
+import { Block, TextBlock, SpecialBlock } from './blocks';
 
 export default class EditorContent {
+  _blocks: Array<Block>;
+
   constructor() {
     this._blocks = [];
   }
 
-  addBlock(block) {
+  addBlock(block: Block) {
     this._blocks.push(block);
   }
 
@@ -21,7 +23,7 @@ export default class EditorContent {
     return length;
   }
 
-  replace(text, atPosition, replaceExisting) {
+  replace(text: string, atPosition: number, replaceExisting: boolean) {
     let currentPosition = 0;
     let inserted = false;
     for (let i = 0; i < this._blocks.length; i++) {

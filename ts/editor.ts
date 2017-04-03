@@ -2,12 +2,19 @@ import EditorContent from './editorcontent';
 import { TextBlock, SpecialBlock } from './blocks';
 
 export default class Editor {
-  constructor(document) {
+  private _caretPosition: number;
+  private _domCaret: HTMLElement;
+  private _domEditor: HTMLElement;
+  private _domHiddenInput: HTMLInputElement;
+  private _editorContent: EditorContent;
+  private _mouseIsDown: boolean;
+
+  constructor(document: HTMLDocument) {
     this._caretPosition = 0;
     this._domCaret = document.getElementById('caret');
     this._domEditor = document.getElementById('editor');
     this._editorContent = new EditorContent();
-    this._domHiddenInput = document.getElementById('sneakyinput');
+    this._domHiddenInput = document.getElementById('sneakyinput') as HTMLInputElement;
     this._mouseIsDown = false;
 
     this._domEditor.addEventListener('mousedown', (e) => {
@@ -86,7 +93,7 @@ export default class Editor {
     this._updateEditorText();
   }
 
-  _insertText(text) {
+  _insertText(text: string): void {
     this._editorContent.replace(text, this._caretPosition, false);
     this._caretPosition += text.length;
     this._updateEditorText();
@@ -98,7 +105,9 @@ export default class Editor {
 
     let currentPosition = 0;
     let insertedCaret = false;
-    for (let block of this._editorContent.getBlocks()) {
+    let blocks = this._editorContent.getBlocks();
+    for (let blockIndex in blocks) {
+      let block = blocks[blockIndex];
       let beforeBlockPosition = currentPosition;
       let afterBlockPosition = beforeBlockPosition + block.getLength();
       currentPosition =  afterBlockPosition;
@@ -106,10 +115,10 @@ export default class Editor {
         if (!insertedCaret && afterBlockPosition > this._caretPosition) {
           let nodeBeforeCaret = document.createElement('span');
           nodeBeforeCaret.textContent = block.getText().substr(0, this._caretPosition - beforeBlockPosition);
-          nodeBeforeCaret.associatedBlock = block;
+          nodeBeforeCaret.dataset.associatedBlockIndex = blockIndex;
           let nodeAfterCaret = document.createElement('span');
           nodeAfterCaret.textContent = block.getText().substr(this._caretPosition - beforeBlockPosition);
-          nodeAfterCaret.associatedBlock = block;
+          nodeAfterCaret.dataset.associatedBlockIndex = blockIndex;
           this._domEditor.appendChild(nodeBeforeCaret);
           this._domEditor.appendChild(this._domCaret);
           this._domEditor.appendChild(nodeAfterCaret);
@@ -117,18 +126,18 @@ export default class Editor {
         } else {
           let node = document.createElement('span');
           node.textContent = block.getText();
-          node.associatedBlock = block;
+          node.dataset.associatedBlockIndex = blockIndex;
           this._domEditor.appendChild(node);
         }
-      } else {
+      } else if (block instanceof SpecialBlock) {
         if (!insertedCaret && afterBlockPosition > this._caretPosition) {
           this._domEditor.appendChild(this._domCaret);
           insertedCaret = true;
         }
         let specialBlockNode = document.createElement('div');
-        specialBlockNode.associatedBlock = block;
+        specialBlockNode.dataset.associatedBlockIndex = blockIndex;
         specialBlockNode.className = 'special-block';
-        specialBlockNode.style = 'background-color: ' + block.getColor();
+        specialBlockNode.style.backgroundColor = block.getColor();
         this._domEditor.appendChild(specialBlockNode);
       }
     }
@@ -137,7 +146,7 @@ export default class Editor {
     }
   }
 
-  _onClick(e) {
+  _onClick(e: MouseEvent): void {
     if (!this._mouseIsDown) {
       return;
     }
@@ -146,10 +155,14 @@ export default class Editor {
       if (node == this._domCaret) {
         continue;
       }
-      let block = node.associatedBlock;
+      if (!(node instanceof HTMLElement)) {
+        continue;
+      }
+      let blockIndex = parseInt(node.dataset.associatedBlockIndex);
+      let block = this._editorContent.getBlocks()[blockIndex];
       if (node == e.target) {
         if (node.nodeName == 'SPAN') {
-          let position = this._findTextPosition(e.target, e);
+          let position = this._findTextPosition(e.target as HTMLSpanElement, e);
           if (position != -1) {
             this._caretPosition = position + shiftPositionBy;
           }
@@ -173,7 +186,7 @@ export default class Editor {
     }
   }
 
-  _findTextPosition(span, e) {
+  _findTextPosition(span: HTMLSpanElement, e: MouseEvent): number {
     let textNode = span.firstChild;
     if (textNode.nodeType != 3 /* text node */) {
       return -1;
@@ -194,7 +207,7 @@ export default class Editor {
       }
     }
     let splitPosition = Math.floor(textNode.textContent.length / 2);
-    let secondTextNode = textNode.splitText(splitPosition);
+    let secondTextNode = (textNode as any).splitText(splitPosition);
     let firstTextNode = textNode;
     let firstSpan = document.createElement('span');
     firstSpan.textContent = firstTextNode.textContent;
