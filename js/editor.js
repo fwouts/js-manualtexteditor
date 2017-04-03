@@ -1,129 +1,12 @@
-/******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
-/******/ 			return installedModules[moduleId].exports;
-/******/
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// identity function for calling harmony imports with the correct context
-/******/ 	__webpack_require__.i = function(value) { return value; };
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, {
-/******/ 				configurable: false,
-/******/ 				enumerable: true,
-/******/ 				get: getter
-/******/ 			});
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 2);
-/******/ })
-/************************************************************************/
-/******/ ([
-/* 0 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+import EditorContent from './editorcontent';
+import { TextBlock, SpecialBlock } from './blocks';
 
-"use strict";
-class TextBlock {
-  constructor(text) {
-    this._text = text;
-  }
-
-  getText() {
-    return this._text;
-  }
-
-  getLength() {
-    return this._text.length;
-  }
-
-  replace(text, atPosition, replaceExisting) {
-    this._text = this._text.substr(0, atPosition) + text + this._text.substr(atPosition + (replaceExisting ? 1 : 0));
-  }
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = TextBlock;
-
-
-class SpecialBlock {
-  constructor(optColor) {
-    this._color = optColor || '#FAA';
-  }
-
-  getLength() {
-    return 1;
-  }
-
-  getColor() {
-    return this._color;
-  }
-}
-/* unused harmony export SpecialBlock */
-
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__editorcontent__ = __webpack_require__(3);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__blocks__ = __webpack_require__(0);
-
-
-
-class Editor {
+export default class Editor {
   constructor(document) {
     this._caretPosition = 0;
     this._domCaret = document.getElementById('caret');
     this._domEditor = document.getElementById('editor');
-    this._editorContent = new __WEBPACK_IMPORTED_MODULE_0__editorcontent__["a" /* default */]();
+    this._editorContent = new EditorContent();
     this._domHiddenInput = document.getElementById('sneakyinput');
     this._mouseIsDown = false;
 
@@ -219,7 +102,7 @@ class Editor {
       let beforeBlockPosition = currentPosition;
       let afterBlockPosition = beforeBlockPosition + block.getLength();
       currentPosition =  afterBlockPosition;
-      if (block instanceof __WEBPACK_IMPORTED_MODULE_1__blocks__["a" /* TextBlock */]) {
+      if (block instanceof TextBlock) {
         if (!insertedCaret && afterBlockPosition > this._caretPosition) {
           let nodeBeforeCaret = document.createElement('span');
           nodeBeforeCaret.textContent = block.getText().substr(0, this._caretPosition - beforeBlockPosition);
@@ -278,7 +161,7 @@ class Editor {
         this._updateEditorText();
         break;
       } else {
-        if (block instanceof __WEBPACK_IMPORTED_MODULE_1__blocks__["a" /* TextBlock */]) {
+        if (block instanceof TextBlock) {
           // Note: when we encounter several spans from the same block (e.g.
           // because there is a caret in between) this will count length properly.
           shiftPositionBy += node.textContent.length;
@@ -336,96 +219,3 @@ class Editor {
     return -1;
   }
 }
-/* harmony export (immutable) */ __webpack_exports__["a"] = Editor;
-
-
-
-/***/ }),
-/* 2 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__editor__ = __webpack_require__(1);
-
-
-let editor = new __WEBPACK_IMPORTED_MODULE_0__editor__["a" /* default */](window.document);
-
-
-/***/ }),
-/* 3 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__blocks__ = __webpack_require__(0);
-
-
-class EditorContent {
-  constructor() {
-    this._blocks = [];
-  }
-
-  addBlock(block) {
-    this._blocks.push(block);
-  }
-
-  getBlocks() {
-    return this._blocks;
-  }
-
-  getTotalLength() {
-    let length = 0;
-    for (let block of this._blocks) {
-      length += block.getLength();
-    }
-    return length;
-  }
-
-  replace(text, atPosition, replaceExisting) {
-    let currentPosition = 0;
-    let inserted = false;
-    for (let i = 0; i < this._blocks.length; i++) {
-      let block = this._blocks[i];
-      let beforeBlockPosition = currentPosition;
-      let afterBlockPosition = beforeBlockPosition + block.getLength();
-      currentPosition =  afterBlockPosition;
-      if (block instanceof __WEBPACK_IMPORTED_MODULE_0__blocks__["a" /* TextBlock */]) {
-        if (afterBlockPosition > atPosition || i == this._blocks.length - 1) {
-          block.replace(text, atPosition - beforeBlockPosition, replaceExisting);
-          inserted = true;
-          break;
-        }
-      } else {
-        if (afterBlockPosition > atPosition) {
-          this._blocks.splice(i, replaceExisting ? 1 : 0, new __WEBPACK_IMPORTED_MODULE_0__blocks__["a" /* TextBlock */](text));
-          inserted = true;
-          break;
-        }
-      }
-    }
-    if (!inserted) {
-      // Text was appended at the end.
-      this._blocks.push(new __WEBPACK_IMPORTED_MODULE_0__blocks__["a" /* TextBlock */](text));
-    }
-    this._optimizeBlocks();
-  }
-
-  _optimizeBlocks() {
-    for (let i = 0; i < this._blocks.length;) {
-      if (this._blocks[i].getLength() == 0) {
-        this._blocks.splice(i, 1);
-      } else {
-        i++;
-      }
-    }
-    if (this._blocks.length == 0) {
-      this._blocks.push(new __WEBPACK_IMPORTED_MODULE_0__blocks__["a" /* TextBlock */](''));
-    }
-  }
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = EditorContent;
-
-
-
-/***/ })
-/******/ ]);
