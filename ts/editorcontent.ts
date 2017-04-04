@@ -1,7 +1,7 @@
 import { Block, TextBlock, SpecialBlock } from './blocks';
 
 export default class EditorContent {
-  _blocks: Array<Block>;
+  private _blocks: Array<Block>;
 
   constructor() {
     this._blocks = [];
